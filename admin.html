@@ -6,7 +6,7 @@
     <title>GadgetStore Pro - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 font-sans p-4">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans p-4 pb-12">
 
     <div class="max-w-3xl mx-auto space-y-6">
         <!-- Header -->
@@ -37,23 +37,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Stok Barang</label>
-                    <input type="number" id="pStock" required placeholder="Contoh: 15" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
-                </div>
-
-                <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Deskripsi Produk</label>
-                    <textarea id="pDesc" rows="3" placeholder="Masukkan spesifikasi produk..." class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+                    <textarea id="pDesc" rows="2" placeholder="Masukkan spesifikasi singkat produk..." class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500"></textarea>
                 </div>
 
                 <div class="border-2 border-dashed border-sky-200 bg-sky-50/50 p-4 rounded-xl text-center">
                     <label class="block text-xs font-semibold text-sky-700 mb-2">📷 Upload Foto Produk</label>
                     <input type="file" id="pImg" accept="image/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
-                </div>
-
-                <div class="border-2 border-dashed border-sky-200 bg-sky-50/50 p-4 rounded-xl text-center">
-                    <label class="block text-xs font-semibold text-sky-700 mb-2">🎬 Upload Video Produk (Opsional)</label>
-                    <input type="file" id="pVideo" accept="video/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
                 </div>
 
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-md">
@@ -64,7 +54,7 @@
 
         <!-- Kelola Katalog Terpasang -->
         <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h2 class="text-lg font-bold text-sky-700">📋 Daftar Katalog Saat Ini</h2>
+            <h2 class="text-lg font-bold text-sky-700">📋 Daftar Produk Aktif</h2>
             <div id="adminProductList" class="space-y-3">
                 <!-- List Produk Admin -->
             </div>
@@ -72,34 +62,43 @@
     </div>
 
     <script>
-        const defaultProducts = [
-            { id: 1, name: 'TWS Airpods Pro', price: 2555, desc: 'CSCS Premium Quality', image: 'https://via.placeholder.com/200?text=TWS+Airpods', video: '' }
+        const initialProducts = [
+            { id: '1', name: 'TWS Airpods Pro', price: 2555, desc: 'High Quality Sound', image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400', video: '' }
         ];
 
+        function getProducts() {
+            return JSON.parse(localStorage.getItem('products')) || initialProducts;
+        }
+
         function loadAdminProducts() {
-            const products = JSON.parse(localStorage.getItem('products')) || defaultProducts;
+            const products = getProducts();
             const list = document.getElementById('adminProductList');
             list.innerHTML = '';
 
-            products.forEach((p, index) => {
+            if (products.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 text-xs text-center py-3">Tidak ada produk dalam katalog.</p>`;
+                return;
+            }
+
+            products.forEach((p) => {
                 list.innerHTML += `
                     <div class="flex items-center justify-between border p-3 rounded-lg bg-slate-50">
                         <div class="flex items-center gap-3">
                             <img src="${p.image}" class="w-12 h-12 object-cover rounded">
                             <div>
                                 <p class="font-bold text-sm">${p.name}</p>
-                                <p class="text-xs text-sky-600">Rp ${Number(p.price).toLocaleString()}</p>
+                                <p class="text-xs text-sky-600">Rp ${Number(p.price).toLocaleString('id-ID')}</p>
                             </div>
                         </div>
-                        <button onclick="deleteProduct(${index})" class="bg-rose-500 text-white text-xs px-3 py-1.5 rounded hover:bg-rose-600">Hapus</button>
+                        <button onclick="deleteProduct('${p.id}')" class="bg-rose-500 text-white text-xs px-3 py-1.5 rounded hover:bg-rose-600 font-medium">Hapus</button>
                     </div>
                 `;
             });
         }
 
-        function deleteProduct(index) {
-            let products = JSON.parse(localStorage.getItem('products')) || defaultProducts;
-            products.splice(index, 1);
+        function deleteProduct(id) {
+            let products = getProducts();
+            products = products.filter(p => p.id !== id);
             localStorage.setItem('products', JSON.stringify(products));
             loadAdminProducts();
         }
@@ -108,26 +107,34 @@
             e.preventDefault();
 
             const name = document.getElementById('pName').value;
-            const price = document.getElementById('pPrice').value;
+            const price = Number(document.getElementById('pPrice').value);
             const desc = document.getElementById('pDesc').value;
             const imgFile = document.getElementById('pImg').files[0];
 
-            let imgUrl = 'https://via.placeholder.com/200?text=Produk+Baru';
+            let defaultImg = 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=400';
 
-            const save = (imageSrc) => {
-                let products = JSON.parse(localStorage.getItem('products')) || defaultProducts;
-                products.push({ id: Date.now(), name, price, desc, image: imageSrc, video: '' });
+            const saveProduct = (imageSrc) => {
+                let products = getProducts();
+                products.push({
+                    id: String(Date.now()),
+                    name,
+                    price,
+                    desc,
+                    image: imageSrc,
+                    video: ''
+                });
                 localStorage.setItem('products', JSON.stringify(products));
                 alert('Produk Berhasil Ditambahkan!');
-                location.reload();
+                document.getElementById('addProductForm').reset();
+                loadAdminProducts();
             };
 
             if (imgFile) {
                 const reader = new FileReader();
-                reader.onload = (e) => save(e.target.result);
+                reader.onload = (e) => saveProduct(e.target.result);
                 reader.readAsDataURL(imgFile);
             } else {
-                save(imgUrl);
+                saveProduct(defaultImg);
             }
         });
 
