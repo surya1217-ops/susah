@@ -417,6 +417,29 @@ video{
     display:none!important;
 }
 
+/* TOAST NOTIFICATION */
+
+#toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#08a66a;
+    color:white;
+    padding:15px 25px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    font-weight:bold;
+    z-index:2000;
+    transition:transform 0.3s ease, opacity 0.3s ease;
+    transform:translateY(100px);
+    opacity:0;
+}
+
+#toast.show{
+    transform:translateY(0);
+    opacity:1;
+}
+
 footer{
     text-align:center;
     padding:25px;
@@ -484,6 +507,9 @@ footer{
 </head>
 
 <body>
+
+<!-- TOAST NOTIFIKASI -->
+<div id="toast"></div>
 
 <!-- LOGIN -->
 
@@ -980,6 +1006,19 @@ function rupiah(number){
 }
 
 
+/* TOAST NOTIFICATION */
+
+function showToast(message){
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2500);
+}
+
+
 /* LOGIN */
 
 function login(){
@@ -1117,9 +1156,19 @@ function showApp(){
     const user=
         localStorage.getItem("loggedUser");
 
+    const role=
+        localStorage.getItem("loggedRole");
+
     document
         .getElementById("welcome")
         .textContent=user;
+
+    /* Tampilkan tombol admin jika login sebagai admin */
+    if(role === "admin"){
+        document.getElementById("adminPanelBtn").classList.remove("hidden");
+    } else {
+        document.getElementById("adminPanelBtn").classList.add("hidden");
+    }
 
     renderProducts();
     renderOrders();
@@ -1213,10 +1262,8 @@ function addToCart(id){
 
     updateCartCount();
 
-    alert(
-        product.name+
-        " berhasil ditambahkan ke keranjang!"
-    );
+    /* Menggunakan toast agar tidak memblokir antarmuka pengguna */
+    showToast("✅ " + product.name + " berhasil ditambahkan!");
 
 }
 
@@ -2045,7 +2092,7 @@ else if(
     loggedRole==="admin"
 ){
 
-    location.href="admin.html";
+    showApp();
 
 }
 
