@@ -4,23 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GadgetStore Pro - Customer Portal</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 600: '#0284c7', 700: '#0369a1' }
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 <body class="bg-gradient-to-b from-slate-900 via-sky-900 to-slate-900 min-h-screen text-slate-800 font-sans">
 
-    <!-- Modal Login / Switch Role -->
+    <!-- Modal Login -->
     <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 border border-slate-100">
             <div class="text-center">
@@ -28,7 +16,7 @@
                 <p class="text-sm text-slate-500">Login ke GadgetStore</p>
             </div>
 
-            <!-- Role Selector (seperti UI Gambar 1) -->
+            <!-- Role Selector -->
             <div class="bg-slate-800 text-white rounded-xl p-2 space-y-2">
                 <label class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-700 cursor-pointer">
                     <span class="font-medium text-sm">Customer</span>
@@ -50,14 +38,14 @@
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
                     <input type="password" id="loginPass" required placeholder="Masukkan password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm bg-slate-50">
                 </div>
+                <p id="loginError" class="text-xs text-rose-500 hidden font-medium text-center"></p>
                 <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2.5 rounded-lg transition shadow-md">Login</button>
             </form>
         </div>
     </div>
 
-    <!-- Main App Wrapper -->
+    <!-- Main Content -->
     <div id="mainContent" class="hidden">
-        <!-- Header / Banner Top -->
         <header class="bg-gradient-to-r from-sky-900 to-blue-700 text-white text-center py-6 shadow-md">
             <h1 class="text-2xl font-bold tracking-wide">GadgetStore Management System</h1>
             <p class="text-xs text-sky-200 mt-1">Premium Technology Marketplace</p>
@@ -74,7 +62,7 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="toggleCartModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2">
+                    <button class="bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2">
                         🛒 Keranjang (<span id="cartCount">0</span>)
                     </button>
                     <button onclick="logout()" class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-lg">Keluar</button>
@@ -82,10 +70,13 @@
             </div>
 
             <!-- Katalog Produk -->
-            <section class="bg-white rounded-xl shadow-sm p-5">
-                <h3 class="text-lg font-bold text-sky-700 mb-4 flex items-center gap-2">📱 Katalog Produk</h3>
+            <section class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <h3 class="text-lg font-bold text-sky-700 flex items-center gap-2">📱 Katalog Produk</h3>
+                    <input type="text" id="searchBox" onkeyup="filterProducts()" placeholder="Cari gadget..." class="px-3 py-1.5 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
                 <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <!-- Produk otomatis dirender lewat JavaScript -->
+                    <!-- Produk dirender via JS -->
                 </div>
             </section>
 
@@ -99,20 +90,31 @@
         </div>
     </div>
 
-    <!-- Script Application Logic -->
     <script>
-        let cart = [];
-        let products = JSON.parse(localStorage.getItem('products')) || [
-            { id: 1, name: 'TWS Airpods Pro', price: 2555, desc: 'High Quality Sound', image: 'https://via.placeholder.com/200?text=TWS+Airpods', video: '' }
+        let cart = 0;
+        const defaultProducts = [
+            { id: 1, name: 'TWS Airpods Pro', price: 2555, desc: 'CSCS Premium Quality', image: 'https://via.placeholder.com/200?text=TWS+Airpods', video: '' },
+            { id: 2, name: 'Smartphone Galaxy Ultra', price: 12000000, desc: 'Flagship Smartphone', image: 'https://via.placeholder.com/200?text=Galaxy+Ultra', video: '' }
         ];
+
+        function getProducts() {
+            return JSON.parse(localStorage.getItem('products')) || defaultProducts;
+        }
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const role = document.querySelector('input[name="userRole"]:checked').value;
             const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            const errorEl = document.getElementById('loginError');
 
             if (role === 'admin') {
-                window.location.href = 'admin.html';
+                if (user === 'admin' && pass === '12345') {
+                    window.location.href = 'admin.html';
+                } else {
+                    errorEl.innerText = "Username/Password Admin salah! (user: admin, pass: 12345)";
+                    errorEl.classList.remove('hidden');
+                }
             } else {
                 localStorage.setItem('currentUser', user);
                 document.getElementById('displayUsername').innerText = user;
@@ -122,16 +124,19 @@
             }
         });
 
-        function renderProducts() {
+        function renderProducts(filter = '') {
             const grid = document.getElementById('productGrid');
+            const products = getProducts();
             grid.innerHTML = '';
-            
-            if(products.length === 0) {
-                grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-4">Belum ada produk tersedia.</p>`;
+
+            const filtered = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-4">Produk tidak ditemukan.</p>`;
                 return;
             }
 
-            products.forEach((p, idx) => {
+            filtered.forEach(p => {
                 grid.innerHTML += `
                     <div class="border rounded-xl p-3 bg-white shadow-sm hover:shadow-md transition">
                         <img src="${p.image}" class="w-full h-40 object-cover rounded-lg mb-2">
@@ -139,7 +144,7 @@
                         <p class="text-sky-600 font-semibold text-sm">Rp ${Number(p.price).toLocaleString()}</p>
                         <p class="text-xs text-slate-400 my-1 truncate">${p.desc}</p>
                         ${p.video ? `<video src="${p.video}" controls class="w-full h-24 rounded my-2 object-cover"></video>` : ''}
-                        <button onclick="addToCart(${idx})" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-2 rounded-lg mt-2 flex justify-center items-center gap-1">
+                        <button onclick="addToCart()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-2 rounded-lg mt-2">
                             🛒 Tambah ke Keranjang
                         </button>
                     </div>
@@ -147,18 +152,22 @@
             });
         }
 
-        function addToCart(index) {
-            cart.push(products[index]);
-            document.getElementById('cartCount').innerText = cart.length;
+        function filterProducts() {
+            const query = document.getElementById('searchBox').value;
+            renderProducts(query);
+        }
+
+        function addToCart() {
+            cart++;
+            document.getElementById('cartCount').innerText = cart;
             document.getElementById('orderStatus').innerHTML = `
                 <div class="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm font-medium">
-                    ✅ Memproses ${cart.length} item dalam pesanan.
+                    ✅ Memproses ${cart} item dalam pesanan.
                 </div>
             `;
         }
 
         function logout() {
-            localStorage.removeItem('currentUser');
             location.reload();
         }
     </script>
