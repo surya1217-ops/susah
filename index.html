@@ -6,17 +6,16 @@
     <title>GadgetStore Pro - Customer Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-b from-slate-900 via-sky-900 to-slate-900 min-h-screen text-slate-800 font-sans">
+<body class="bg-gradient-to-b from-slate-900 via-sky-900 to-slate-900 min-h-screen text-slate-800 font-sans pb-10">
 
     <!-- Modal Login -->
     <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 border border-slate-100">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5">
             <div class="text-center">
                 <h2 class="text-2xl font-bold text-sky-600">GadgetStore Pro</h2>
                 <p class="text-sm text-slate-500">Login ke GadgetStore</p>
             </div>
 
-            <!-- Role Selector -->
             <div class="bg-slate-800 text-white rounded-xl p-2 space-y-2">
                 <label class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-700 cursor-pointer">
                     <span class="font-medium text-sm">Customer</span>
@@ -32,15 +31,39 @@
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label>
-                    <input type="text" id="loginUser" required placeholder="Masukkan username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm bg-slate-50">
+                    <input type="text" id="loginUser" required placeholder="Masukkan username" class="w-full px-4 py-2 border rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
-                    <input type="password" id="loginPass" required placeholder="Masukkan password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm bg-slate-50">
+                    <input type="password" id="loginPass" required placeholder="Masukkan password" class="w-full px-4 py-2 border rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
                 <p id="loginError" class="text-xs text-rose-500 hidden font-medium text-center"></p>
-                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2.5 rounded-lg transition shadow-md">Login</button>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2.5 rounded-lg shadow-md">Login</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Keranjang -->
+    <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-40">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800">🛒 Keranjang Belanja</h3>
+                <button onclick="toggleCartModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div id="cartItemsList" class="overflow-y-auto flex-1 space-y-3 pr-2">
+                <!-- List Item Keranjang -->
+            </div>
+
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex justify-between font-bold text-slate-800 text-base">
+                    <span>Total Pembayaran:</span>
+                    <span id="cartTotalPrice" class="text-sky-600">Rp 0</span>
+                </div>
+                <button onclick="checkout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg shadow">
+                    💳 Checkout Sekarang
+                </button>
+            </div>
         </div>
     </div>
 
@@ -62,7 +85,7 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button class="bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2">
+                    <button onclick="toggleCartModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2">
                         🛒 Keranjang (<span id="cartCount">0</span>)
                     </button>
                     <button onclick="logout()" class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-lg">Keluar</button>
@@ -83,22 +106,23 @@
             <!-- Status Pesanan -->
             <section class="bg-white rounded-xl shadow-sm p-5">
                 <h3 class="text-lg font-bold text-sky-700 mb-4 flex items-center gap-2">📦 Status Pesanan Saya</h3>
-                <div id="orderStatus" class="text-center py-6 text-slate-400 text-sm">
-                    📦 Belum ada pesanan.
+                <div id="orderStatus" class="space-y-3">
+                    <p class="text-center py-4 text-slate-400 text-sm">📦 Belum ada pesanan.</p>
                 </div>
             </section>
         </div>
     </div>
 
     <script>
-        let cart = 0;
-        const defaultProducts = [
-            { id: 1, name: 'TWS Airpods Pro', price: 2555, desc: 'CSCS Premium Quality', image: 'https://via.placeholder.com/200?text=TWS+Airpods', video: '' },
-            { id: 2, name: 'Smartphone Galaxy Ultra', price: 12000000, desc: 'Flagship Smartphone', image: 'https://via.placeholder.com/200?text=Galaxy+Ultra', video: '' }
+        const initialProducts = [
+            { id: '1', name: 'TWS Airpods Pro', price: 2555, desc: 'High Quality Sound', image: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400', video: '' }
         ];
 
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
         function getProducts() {
-            return JSON.parse(localStorage.getItem('products')) || defaultProducts;
+            return JSON.parse(localStorage.getItem('products')) || initialProducts;
         }
 
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -121,6 +145,8 @@
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
                 renderProducts();
+                updateCartUI();
+                renderOrders();
             }
         });
 
@@ -138,13 +164,15 @@
 
             filtered.forEach(p => {
                 grid.innerHTML += `
-                    <div class="border rounded-xl p-3 bg-white shadow-sm hover:shadow-md transition">
-                        <img src="${p.image}" class="w-full h-40 object-cover rounded-lg mb-2">
-                        <h4 class="font-bold text-slate-800">${p.name}</h4>
-                        <p class="text-sky-600 font-semibold text-sm">Rp ${Number(p.price).toLocaleString()}</p>
-                        <p class="text-xs text-slate-400 my-1 truncate">${p.desc}</p>
-                        ${p.video ? `<video src="${p.video}" controls class="w-full h-24 rounded my-2 object-cover"></video>` : ''}
-                        <button onclick="addToCart()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-2 rounded-lg mt-2">
+                    <div class="border rounded-xl p-3 bg-white shadow-sm flex flex-col justify-between">
+                        <div>
+                            <img src="${p.image}" class="w-full h-40 object-cover rounded-lg mb-2">
+                            <h4 class="font-bold text-slate-800">${p.name}</h4>
+                            <p class="text-sky-600 font-semibold text-sm">Rp ${Number(p.price).toLocaleString('id-ID')}</p>
+                            <p class="text-xs text-slate-400 my-1 truncate">${p.desc}</p>
+                            ${p.video ? `<video src="${p.video}" controls class="w-full h-24 rounded my-2 object-cover"></video>` : ''}
+                        </div>
+                        <button onclick="addToCart('${p.id}')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold py-2 rounded-lg mt-2">
                             🛒 Tambah ke Keranjang
                         </button>
                     </div>
@@ -153,18 +181,132 @@
         }
 
         function filterProducts() {
-            const query = document.getElementById('searchBox').value;
-            renderProducts(query);
+            renderProducts(document.getElementById('searchBox').value);
         }
 
-        function addToCart() {
-            cart++;
-            document.getElementById('cartCount').innerText = cart;
-            document.getElementById('orderStatus').innerHTML = `
-                <div class="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm font-medium">
-                    ✅ Memproses ${cart} item dalam pesanan.
-                </div>
-            `;
+        function addToCart(productId) {
+            const products = getProducts();
+            const product = products.find(p => p.id === productId);
+            const item = cart.find(i => i.id === productId);
+
+            if (item) {
+                item.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+
+            saveCart();
+            updateCartUI();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+            }
+            saveCart();
+            updateCartUI();
+        }
+
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function updateCartUI() {
+            const cartCount = cart.reduce((acc, curr) => acc + curr.qty, 0);
+            document.getElementById('cartCount').innerText = cartCount;
+
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+
+            let total = 0;
+            if (cart.length === 0) {
+                list.innerHTML = `<p class="text-center text-slate-400 py-6 text-sm">Keranjang Anda masih kosong.</p>`;
+            } else {
+                cart.forEach(item => {
+                    const subtotal = item.price * item.qty;
+                    total += subtotal;
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between border-b pb-2">
+                            <div class="flex items-center gap-3">
+                                <img src="${item.image}" class="w-12 h-12 object-cover rounded">
+                                <div>
+                                    <p class="font-bold text-xs text-slate-800">${item.name}</p>
+                                    <p class="text-xs text-sky-600">Rp ${Number(item.price).toLocaleString('id-ID')}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 bg-slate-200 rounded font-bold text-xs">-</button>
+                                <span class="text-xs font-semibold">${item.qty}</span>
+                                <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 bg-slate-200 rounded font-bold text-xs">+</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('cartTotalPrice').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        }
+
+        function toggleCartModal() {
+            document.getElementById('cartModal').classList.toggle('hidden');
+            document.getElementById('cartModal').classList.toggle('flex');
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Keranjang Anda kosong!');
+                return;
+            }
+
+            const total = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            const newOrder = {
+                id: 'ORD-' + Date.now(),
+                date: new Date().toLocaleString('id-ID'),
+                items: [...cart],
+                total: total,
+                status: 'Diproses'
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('orders', JSON.stringify(orders));
+
+            cart = [];
+            saveCart();
+            updateCartUI();
+            toggleCartModal();
+            renderOrders();
+
+            alert('Checkout Berhasil! Pesanan Anda sedang diproses.');
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('orderStatus');
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-center py-4 text-slate-400 text-sm">📦 Belum ada pesanan.</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            orders.forEach(o => {
+                container.innerHTML += `
+                    <div class="border rounded-lg p-3 bg-slate-50 text-xs space-y-2">
+                        <div class="flex justify-between font-bold border-b pb-2">
+                            <span>ID: ${o.id}</span>
+                            <span class="text-emerald-600">${o.status}</span>
+                        </div>
+                        <p class="text-slate-500">${o.date}</p>
+                        <div>
+                            ${o.items.map(i => `<p class="text-slate-700">${i.name} x${i.qty}</p>`).join('')}
+                        </div>
+                        <div class="font-bold text-slate-800 text-right pt-1 border-t">
+                            Total: Rp ${o.total.toLocaleString('id-ID')}
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         function logout() {
