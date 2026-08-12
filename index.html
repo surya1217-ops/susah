@@ -417,8 +417,7 @@ video{
     display:none!important;
 }
 
-/* TOAST NOTIFICATION */
-
+/* TOAST NOTIFIKASI */
 #toast{
     position:fixed;
     bottom:20px;
@@ -548,6 +547,12 @@ footer{
 
             Login
 
+        </button>
+
+        <button 
+            onclick="resetStorage()" 
+            style="width:100%; margin-top:10px; background:#64748b;">
+            🔄 Reset Data App (Fix Stuk)
         </button>
 
         <p
@@ -943,227 +948,121 @@ footer{
 <script>
 
 /* =====================================================
-DATA PRODUK
+DATA PRODUK DEFAULT
 ===================================================== */
 
 const defaultProducts=[
-
-{
-    id:1,
-    name:"Smartphone Premium",
-    price:12000000,
-    desc:"Layar AMOLED 120Hz, RAM 12GB, kamera 108MP dan baterai 5000mAh.",
-    image:"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800",
-    video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-},
-
-{
-    id:2,
-    name:"Laptop Ultra",
-    price:15500000,
-    desc:"Laptop performa tinggi dengan RAM 16GB, SSD 1TB dan layar Full HD.",
-    image:"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800",
-    video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-}
-
+    {
+        id:1,
+        name:"Smartphone Premium",
+        price:12000000,
+        desc:"Layar AMOLED 120Hz, RAM 12GB, kamera 108MP dan baterai 5000mAh.",
+        image:"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800",
+        video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    },
+    {
+        id:2,
+        name:"Laptop Ultra",
+        price:15500000,
+        desc:"Laptop performa tinggi dengan RAM 16GB, SSD 1TB dan layar Full HD.",
+        image:"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800",
+        video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    }
 ];
 
+/* INISIALISASI LOCAL STORAGE */
+function initStorage(){
+    if(!localStorage.getItem("products")){
+        localStorage.setItem("products", JSON.stringify(defaultProducts));
+    }
+    if(!localStorage.getItem("orders")){
+        localStorage.setItem("orders", JSON.stringify([]));
+    }
+}
+initStorage();
 
-/* STORAGE */
-
-if(!localStorage.getItem("products")){
-
-    localStorage.setItem(
-        "products",
-        JSON.stringify(defaultProducts)
-    );
-
+function resetStorage(){
+    if(confirm("Apakah Anda yakin ingin mereset seluruh data aplikasi?")){
+        localStorage.clear();
+        initStorage();
+        alert("Data berhasil di-reset. Silakan login kembali.");
+        location.reload();
+    }
 }
 
-if(!localStorage.getItem("orders")){
-
-    localStorage.setItem(
-        "orders",
-        JSON.stringify([])
-    );
-
-}
-
-
-/* RUPIAH */
-
+/* RUPIAH FORMAT */
 function rupiah(number){
-
-    return new Intl.NumberFormat(
-        "id-ID",
-        {
-            style:"currency",
-            currency:"IDR",
-            maximumFractionDigits:0
-        }
-    ).format(number);
-
+    return new Intl.NumberFormat("id-ID", {
+        style:"currency",
+        currency:"IDR",
+        maximumFractionDigits:0
+    }).format(number);
 }
 
-
-/* TOAST NOTIFICATION */
-
+/* TOAST NOTIFIKASI */
 function showToast(message){
     const toast = document.getElementById("toast");
     toast.textContent = message;
     toast.classList.add("show");
-    
     setTimeout(() => {
         toast.classList.remove("show");
     }, 2500);
 }
 
-
 /* LOGIN */
-
 function login(){
+    const role = document.getElementById("role").value;
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("loginMessage");
 
-    const role=document.getElementById("role").value;
-
-    const username=
-        document.getElementById("username")
-        .value.trim();
-
-    const password=
-        document.getElementById("password")
-        .value;
-
-    const msg=
-        document.getElementById("loginMessage");
-
-    msg.textContent="";
-
+    msg.textContent = "";
 
     if(!username || !password){
-
-        msg.textContent=
-        "Username dan password wajib diisi!";
-
+        msg.textContent = "Username dan password wajib diisi!";
         return;
     }
 
-
-    /* ADMIN */
-
-    if(role==="admin"){
-
-        if(
-            username==="admin" &&
-            password==="12345"
-        ){
-
-            localStorage.setItem(
-                "loggedUser",
-                "admin"
-            );
-
-            localStorage.setItem(
-                "loggedRole",
-                "admin"
-            );
-
-            location.href="admin.html";
-
+    if(role === "admin"){
+        if(username === "admin" && password === "12345"){
+            localStorage.setItem("loggedUser", "admin");
+            localStorage.setItem("loggedRole", "admin");
+            location.href = "admin.html";
+        } else {
+            msg.textContent = "Username atau password admin salah!";
         }
-
-        else{
-
-            msg.textContent=
-            "Username atau password admin salah!";
-
-        }
-
         return;
     }
 
-
-    /* CUSTOMER */
-
-    let customers=
-        JSON.parse(
-            localStorage.getItem("customers")||"[]"
-        );
-
-
-    let customer=
-        customers.find(
-            c=>c.username===username
-        );
-
+    let customers = JSON.parse(localStorage.getItem("customers") || "[]");
+    let customer = customers.find(c => c.username === username);
 
     if(!customer){
-
-        customer={
-            username:username,
-            password:password
-        };
-
+        customer = { username: username, password: password };
         customers.push(customer);
-
-        localStorage.setItem(
-            "customers",
-            JSON.stringify(customers)
-        );
-
-    }
-
-    else{
-
-        if(customer.password!==password){
-
-            msg.textContent=
-            "Password customer salah!";
-
+        localStorage.setItem("customers", JSON.stringify(customers));
+    } else {
+        if(customer.password !== password){
+            msg.textContent = "Password customer salah!";
             return;
-
         }
-
     }
 
-
-    localStorage.setItem(
-        "loggedUser",
-        username
-    );
-
-    localStorage.setItem(
-        "loggedRole",
-        "customer"
-    );
-
+    localStorage.setItem("loggedUser", username);
+    localStorage.setItem("loggedRole", "customer");
     showApp();
-
 }
 
-
-/* SHOW APP */
-
+/* TAMPILKAN APLIKASI */
 function showApp(){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
 
-    document
-        .getElementById("loginPage")
-        .classList.add("hidden");
+    const user = localStorage.getItem("loggedUser");
+    const role = localStorage.getItem("loggedRole");
 
-    document
-        .getElementById("app")
-        .classList.remove("hidden");
+    document.getElementById("welcome").textContent = user;
 
-    const user=
-        localStorage.getItem("loggedUser");
-
-    const role=
-        localStorage.getItem("loggedRole");
-
-    document
-        .getElementById("welcome")
-        .textContent=user;
-
-    /* Tampilkan tombol admin jika login sebagai admin */
     if(role === "admin"){
         document.getElementById("adminPanelBtn").classList.remove("hidden");
     } else {
@@ -1175,937 +1074,331 @@ function showApp(){
     updateCartCount();
 }
 
-
 /* LOGOUT */
-
 function logout(){
-
     localStorage.removeItem("loggedUser");
     localStorage.removeItem("loggedRole");
-
     location.reload();
-
 }
 
-
-/* CART */
-
+/* CART MANAGEMENT STORAGE */
 function getCartKey(){
-
-    return "cart_"+
-        localStorage.getItem("loggedUser");
-
+    const user = localStorage.getItem("loggedUser") || "guest";
+    return "cart_" + user;
 }
-
 
 function getCart(){
-
-    return JSON.parse(
-        localStorage.getItem(getCartKey())||"[]"
-    );
-
+    return JSON.parse(localStorage.getItem(getCartKey()) || "[]");
 }
-
 
 function saveCart(cart){
-
-    localStorage.setItem(
-        getCartKey(),
-        JSON.stringify(cart)
-    );
-
+    localStorage.setItem(getCartKey(), JSON.stringify(cart));
 }
 
-
-/* ADD CART */
-
+/* TAMBAH KE KERANJANG (FIXED) */
 function addToCart(id){
+    const products = JSON.parse(localStorage.getItem("products") || "[]");
+    const product = products.find(p => p.id === id);
 
-    const products=
-        JSON.parse(
-            localStorage.getItem("products")||"[]"
-        );
+    if(!product){
+        alert("Produk tidak ditemukan!");
+        return;
+    }
 
-    const product=
-        products.find(p=>p.id===id);
-
-    if(!product)return;
-
-    let cart=getCart();
-
-    const existing=
-        cart.find(
-            item=>item.productId===id
-        );
+    let cart = getCart();
+    const existing = cart.find(item => item.productId === id);
 
     if(existing){
-
         existing.qty++;
-
-    }
-
-    else{
-
+    } else {
         cart.push({
-
-            productId:product.id,
-            name:product.name,
-            price:product.price,
-            image:product.image,
-            qty:1
-
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            qty: 1
         });
-
     }
 
     saveCart(cart);
-
     updateCartCount();
-
-    /* Menggunakan toast agar tidak memblokir antarmuka pengguna */
-    showToast("✅ " + product.name + " berhasil ditambahkan!");
-
+    showToast("✅ " + product.name + " berhasil masuk keranjang!");
 }
 
-
-/* CART COUNT */
-
+/* HITUNG JUMLAH ITEM DI KERANJANG */
 function updateCartCount(){
-
-    const cart=getCart();
-
-    const count=
-        cart.reduce(
-            (total,item)=>
-            total+item.qty,
-            0
-        );
-
-    document
-        .getElementById("cartCount")
-        .textContent=count;
-
+    const cart = getCart();
+    const count = cart.reduce((total, item) => total + item.qty, 0);
+    document.getElementById("cartCount").textContent = count;
 }
-
 
 /* RENDER PRODUK */
-
 function renderProducts(){
+    const container = document.getElementById("products");
+    const products = JSON.parse(localStorage.getItem("products") || "[]");
 
-    const container=
-        document.getElementById("products");
-
-    const products=
-        JSON.parse(
-            localStorage.getItem("products")||"[]"
-        );
-
-    if(products.length===0){
-
-        container.innerHTML=
-        `<div class="empty">Belum ada produk.</div>`;
-
+    if(products.length === 0){
+        container.innerHTML = `<div class="empty">Belum ada produk.</div>`;
         return;
-
     }
 
-    container.innerHTML=
-
-    products.map(product=>`
-
+    container.innerHTML = products.map(product => `
         <div class="product">
-
-            <img
-                src="${product.image}"
-                alt="${product.name}"
-                onerror="
-                    this.src='https://via.placeholder.com/600x400?text=GadgetStore'
-                "
-            >
-
+            <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x400?text=GadgetStore'">
             <div class="product-body">
-
                 <h3>${product.name}</h3>
-
-                <div class="price">
-                    ${rupiah(product.price)}
-                </div>
-
-                <p class="desc">
-                    ${product.desc}
-                </p>
-
+                <div class="price">${rupiah(product.price)}</div>
+                <p class="desc">${product.desc}</p>
                 <video controls>
-
-                    <source
-                        src="${product.video}"
-                        type="video/mp4">
-
+                    <source src="${product.video}" type="video/mp4">
                     Browser tidak mendukung video.
-
                 </video>
-
-                <button
-                    class="buy"
-                    style="width:100%;margin-top:15px"
-                    onclick="addToCart(${product.id})">
-
+                <button class="buy" style="width:100%;margin-top:15px" onclick="addToCart(${product.id})">
                     🛒 Tambah ke Keranjang
-
                 </button>
-
             </div>
-
         </div>
-
     `).join("");
-
 }
 
-
-/* OPEN CART */
-
+/* MODAL KERANJANG */
 function openCart(){
-
     renderCart();
-
-    document
-        .getElementById("cartModal")
-        .classList.remove("hidden");
-
+    document.getElementById("cartModal").classList.remove("hidden");
 }
-
 
 function closeCart(){
-
-    document
-        .getElementById("cartModal")
-        .classList.add("hidden");
-
+    document.getElementById("cartModal").classList.add("hidden");
 }
-
-
-/* RENDER CART */
 
 function renderCart(){
+    const container = document.getElementById("cartItems");
+    const cart = getCart();
 
-    const container=
-        document.getElementById("cartItems");
-
-    const cart=getCart();
-
-    if(cart.length===0){
-
-        container.innerHTML=
-        `<div class="empty">🛒 Keranjang masih kosong.</div>`;
-
-        document
-            .getElementById("cartTotal")
-            .textContent="";
-
+    if(cart.length === 0){
+        container.innerHTML = `<div class="empty">🛒 Keranjang masih kosong.</div>`;
+        document.getElementById("cartTotal").textContent = "";
         return;
-
     }
 
-    container.innerHTML=
-
-    cart.map(item=>`
-
+    container.innerHTML = cart.map(item => `
         <div class="cart-item">
-
-            <img
-                src="${item.image}"
-                onerror="
-                    this.src='https://via.placeholder.com/100'
-                "
-            >
-
+            <img src="${item.image}" onerror="this.src='https://via.placeholder.com/100'">
             <div class="cart-info">
-
                 <h4>${item.name}</h4>
-
-                <div class="cart-price">
-                    ${rupiah(item.price)}
-                </div>
-
+                <div class="cart-price">${rupiah(item.price)}</div>
                 <div class="qty">
-
-                    <button
-                        onclick="changeQty(${item.productId},-1)">
-                        −
-                    </button>
-
+                    <button onclick="changeQty(${item.productId}, -1)">−</button>
                     <span>${item.qty}</span>
-
-                    <button
-                        onclick="changeQty(${item.productId},1)">
-                        +
-                    </button>
-
-                    <button
-                        class="danger"
-                        onclick="removeFromCart(${item.productId})">
-                        🗑️
-                    </button>
-
+                    <button onclick="changeQty(${item.productId}, 1)">+</button>
+                    <button class="danger" onclick="removeFromCart(${item.productId})">🗑️</button>
                 </div>
-
             </div>
-
         </div>
-
     `).join("");
 
-    const total=
-        cart.reduce(
-            (sum,item)=>
-            sum+item.price*item.qty,
-            0
-        );
-
-    document
-        .getElementById("cartTotal")
-        .textContent=
-        "Total: "+rupiah(total);
-
+    const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    document.getElementById("cartTotal").textContent = "Total: " + rupiah(total);
 }
 
+function changeQty(id, change){
+    let cart = getCart();
+    const item = cart.find(i => i.productId === id);
+    if(!item) return;
 
-/* QUANTITY */
-
-function changeQty(id,change){
-
-    let cart=getCart();
-
-    const item=
-        cart.find(i=>i.productId===id);
-
-    if(!item)return;
-
-    item.qty+=change;
-
-    if(item.qty<=0){
-
-        cart=
-            cart.filter(
-                i=>i.productId!==id
-            );
-
+    item.qty += change;
+    if(item.qty <= 0){
+        cart = cart.filter(i => i.productId !== id);
     }
 
     saveCart(cart);
-
     renderCart();
-
     updateCartCount();
-
 }
-
-
-/* REMOVE */
 
 function removeFromCart(id){
-
-    let cart=getCart();
-
-    cart=
-        cart.filter(
-            item=>item.productId!==id
-        );
-
+    let cart = getCart();
+    cart = cart.filter(item => item.productId !== id);
     saveCart(cart);
-
     renderCart();
-
     updateCartCount();
-
 }
-
 
 /* CHECKOUT */
-
 function openCheckout(){
-
-    const cart=getCart();
-
-    if(cart.length===0){
-
+    const cart = getCart();
+    if(cart.length === 0){
         alert("Keranjang masih kosong!");
-
         return;
-
     }
 
-    const total=
-        cart.reduce(
-            (sum,item)=>
-            sum+item.price*item.qty,
-            0
-        );
-
-    document
-        .getElementById("checkoutTotal")
-        .textContent=
-        "Total Pembayaran: "+rupiah(total);
+    const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    document.getElementById("checkoutTotal").textContent = "Total Pembayaran: " + rupiah(total);
 
     closeCart();
-
-    document
-        .getElementById("checkoutModal")
-        .classList.remove("hidden");
-
+    document.getElementById("checkoutModal").classList.remove("hidden");
 }
-
 
 function closeCheckout(){
-
-    document
-        .getElementById("checkoutModal")
-        .classList.add("hidden");
-
+    document.getElementById("checkoutModal").classList.add("hidden");
 }
-
-
-/* DETAIL PEMBAYARAN */
 
 function showPaymentDetail(method){
-
-    const details=[
-        "BNI",
-        "BCA",
-        "DANA",
-        "GoPay",
-        "OVO"
-    ];
-
-    details.forEach(item=>{
-
-        document
-            .getElementById("detail"+item)
-            .style.display="none";
-
+    const details = ["BNI", "BCA", "DANA", "GoPay", "OVO"];
+    details.forEach(item => {
+        document.getElementById("detail" + item).style.display = "none";
     });
-
-    document
-        .getElementById("detail"+method)
-        .style.display="block";
-
+    document.getElementById("detail" + method).style.display = "block";
 }
-
 
 /* PROSES PEMBAYARAN */
-
 function processCheckout(){
-
-    const selected=
-        document.querySelector(
-            'input[name="payment"]:checked'
-        );
-
+    const selected = document.querySelector('input[name="payment"]:checked');
     if(!selected){
-
-        alert(
-            "Silakan pilih metode pembayaran terlebih dahulu!"
-        );
-
+        alert("Silakan pilih metode pembayaran terlebih dahulu!");
         return;
-
     }
 
-    const cart=getCart();
-
-    if(cart.length===0){
-
+    const cart = getCart();
+    if(cart.length === 0){
         alert("Keranjang kosong!");
-
         return;
-
     }
 
-    const user=
-        localStorage.getItem("loggedUser");
+    const user = localStorage.getItem("loggedUser");
+    let orders = JSON.parse(localStorage.getItem("orders") || "[]");
+    const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-    let orders=
-        JSON.parse(
-            localStorage.getItem("orders")||"[]"
-        );
-
-    const total=
-        cart.reduce(
-            (sum,item)=>
-            sum+item.price*item.qty,
-            0
-        );
-
-
-    cart.forEach(item=>{
-
+    cart.forEach(item => {
         orders.push({
-
-            id:
-                Date.now()+
-                Math.floor(
-                    Math.random()*10000
-                ),
-
-            customer:user,
-
-            productId:item.productId,
-
-            productName:item.name,
-
-            price:item.price,
-
-            quantity:item.qty,
-
-            total:item.price*item.qty,
-
-            payment:selected.value,
-
-            status:"Sudah Dibayar",
-
-            date:
-                new Date()
-                .toLocaleString("id-ID")
-
+            id: Date.now() + Math.floor(Math.random() * 10000),
+            customer: user,
+            productId: item.productId,
+            productName: item.name,
+            price: item.price,
+            quantity: item.qty,
+            total: item.price * item.qty,
+            payment: selected.value,
+            status: "Sudah Dibayar",
+            date: new Date().toLocaleString("id-ID")
         });
-
     });
 
-
-    localStorage.setItem(
-        "orders",
-        JSON.stringify(orders)
-    );
-
-
-    saveCart([]);
+    localStorage.setItem("orders", JSON.stringify(orders));
+    saveCart([]); // Kosongkan keranjang
 
     closeCheckout();
-
     updateCartCount();
-
     renderOrders();
 
-
-    alert(
-
-        "✅ PEMBAYARAN BERHASIL!\n\n"+
-        "Metode: "+selected.value+
-        "\nTotal: "+rupiah(total)+
-        "\n\nStatus: Sudah Dibayar"
-
-    );
-
+    alert("✅ PEMBAYARAN BERHASIL!\n\nMetode: " + selected.value + "\nTotal: " + rupiah(total) + "\n\nStatus: Sudah Dibayar");
 }
 
-
-/* RENDER ORDER */
-
+/* RENDER PESANAN HASIL CHECKOUT */
 function renderOrders(){
+    const container = document.getElementById("orders");
+    const user = localStorage.getItem("loggedUser");
+    const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+    const myOrders = orders.filter(o => o.customer === user);
 
-    const container=
-        document.getElementById("orders");
-
-    const user=
-        localStorage.getItem("loggedUser");
-
-    const orders=
-        JSON.parse(
-            localStorage.getItem("orders")||"[]"
-        );
-
-    const myOrders=
-        orders.filter(
-            o=>o.customer===user
-        );
-
-    if(myOrders.length===0){
-
-        container.innerHTML=
-        `
-        <div class="empty">
-            📦 Belum ada pesanan.
-        </div>
-        `;
-
+    if(myOrders.length === 0){
+        container.innerHTML = `<div class="empty">📦 Belum ada pesanan.</div>`;
         return;
-
     }
 
-    container.innerHTML=
-
-    myOrders
-    .slice()
-    .reverse()
-    .map(order=>`
-
+    container.innerHTML = myOrders.slice().reverse().map(order => `
         <div class="order">
+            <h3>📦 ${order.productName}</h3>
+            <p>Jumlah: <b>${order.quantity || 1}</b></p>
+            <p>Total: <b>${rupiah(order.total || order.price)}</b></p>
+            <p>Pembayaran: <b>${order.payment || "-"}</b></p>
+            <p>Tanggal: ${order.date}</p>
 
-            <h3>
-                📦 ${order.productName}
-            </h3>
-
-            <p>
-                Jumlah:
-                <b>${order.quantity||1}</b>
-            </p>
-
-            <p>
-                Total:
-                <b>
-                    ${rupiah(
-                        order.total||order.price
-                    )}
-                </b>
-            </p>
-
-            <p>
-                Pembayaran:
-                <b>${order.payment||"-"}</b>
-            </p>
-
-            <p>
-                Tanggal:
-                ${order.date}
-            </p>
-
-
-            <div
-                style="
-                    margin-top:18px;
-                    padding:18px;
-                    background:#f8fbff;
-                    border-radius:15px;
-                "
-            >
-
-                <h4
-                    style="
-                        color:#075da8;
-                        margin-bottom:15px;
-                    "
-                >
-
-                    🚚 Tracking Pesanan
-
-                </h4>
-
-
+            <div style="margin-top:18px; padding:18px; background:#f8fbff; border-radius:15px;">
+                <h4 style="color:#075da8; margin-bottom:15px;">🚚 Tracking Pesanan</h4>
+                
                 <div class="tracking">
-
-                    <div
-                        class="
-                            step
-                            ${getStepClass(
-                                order.status,
-                                1
-                            )}
-                        "
-                    >
-
-                        <div class="circle">
-                            💰
-                        </div>
-
-                        <small>
-                            Belum<br>Dibayar
-                        </small>
-
+                    <div class="step ${getStepClass(order.status, 1)}">
+                        <div class="circle">💰</div>
+                        <small>Belum<br>Dibayar</small>
                     </div>
-
-
-                    <div
-                        class="
-                            line
-                            ${getLineClass(
-                                order.status,
-                                2
-                            )}
-                        "
-                    ></div>
-
-
-                    <div
-                        class="
-                            step
-                            ${getStepClass(
-                                order.status,
-                                2
-                            )}
-                        "
-                    >
-
-                        <div class="circle">
-                            ✅
-                        </div>
-
-                        <small>
-                            Sudah<br>Dibayar
-                        </small>
-
+                    <div class="line ${getLineClass(order.status, 2)}"></div>
+                    <div class="step ${getStepClass(order.status, 2)}">
+                        <div class="circle">✅</div>
+                        <small>Sudah<br>Dibayar</small>
                     </div>
-
-
-                    <div
-                        class="
-                            line
-                            ${getLineClass(
-                                order.status,
-                                3
-                            )}
-                        "
-                    ></div>
-
-
-                    <div
-                        class="
-                            step
-                            ${getStepClass(
-                                order.status,
-                                3
-                            )}
-                        "
-                    >
-
-                        <div class="circle">
-                            📦
-                        </div>
-
-                        <small>
-                            Sedang<br>Dikemas
-                        </small>
-
+                    <div class="line ${getLineClass(order.status, 3)}"></div>
+                    <div class="step ${getStepClass(order.status, 3)}">
+                        <div class="circle">📦</div>
+                        <small>Sedang<br>Dikemas</small>
                     </div>
-
-
-                    <div
-                        class="
-                            line
-                            ${getLineClass(
-                                order.status,
-                                4
-                            )}
-                        "
-                    ></div>
-
-
-                    <div
-                        class="
-                            step
-                            ${getStepClass(
-                                order.status,
-                                4
-                            )}
-                        "
-                    >
-
-                        <div class="circle">
-                            🚚
-                        </div>
-
-                        <small>
-                            Sudah<br>Dikirim
-                        </small>
-
+                    <div class="line ${getLineClass(order.status, 4)}"></div>
+                    <div class="step ${getStepClass(order.status, 4)}">
+                        <div class="circle">🚚</div>
+                        <small>Sudah<br>Dikirim</small>
                     </div>
-
                 </div>
 
-
-                <div
-                    style="
-                        text-align:center;
-                        margin-top:20px;
-                    "
-                >
-
-                    <span class="status">
-
-                        ${getStatusIcon(order.status)}
-
-                        ${order.status}
-
-                    </span>
-
+                <div style="text-align:center; margin-top:20px;">
+                    <span class="status">${getStatusIcon(order.status)} ${order.status}</span>
                 </div>
 
-
-                <p
-                    style="
-                        text-align:center;
-                        margin-top:12px;
-                        color:#64748b;
-                    "
-                >
-
+                <p style="text-align:center; margin-top:12px; color:#64748b;">
                     ${getStatusMessage(order.status)}
-
                 </p>
 
-
-                ${
-                    order.status==="Sudah Dibayar"
-                    ?
-                    `
+                ${order.status === "Sudah Dibayar" ? `
                     <div class="confirm-box">
-
-                        ✅ Pembayaran berhasil dikonfirmasi.
-
-                        <br><br>
-
-                        Metode pembayaran:
-                        <b>${order.payment}</b>
-
+                        ✅ Pembayaran berhasil dikonfirmasi.<br><br>
+                        Metode pembayaran: <b>${order.payment}</b>
                     </div>
-                    `
-                    :
-                    ""
-                }
-
+                ` : ""}
             </div>
-
         </div>
-
     `).join("");
-
 }
 
-
-/* STEP */
-
-function getStepClass(status,step){
-
-    const statusNumber={
-
-        "Belum Dibayar":1,
-        "Sudah Dibayar":2,
-        "Sedang Dikemas":3,
-        "Sudah Dikirim":4
-
-    };
-
-    const current=
-        statusNumber[status]||1;
-
-    if(step<current)
-        return "done";
-
-    if(step===current)
-        return "active";
-
+function getStepClass(status, step){
+    const statusNumber = { "Belum Dibayar": 1, "Sudah Dibayar": 2, "Sedang Dikemas": 3, "Sudah Dikirim": 4 };
+    const current = statusNumber[status] || 1;
+    if(step < current) return "done";
+    if(step === current) return "active";
     return "";
-
 }
 
-
-/* LINE */
-
-function getLineClass(status,step){
-
-    const statusNumber={
-
-        "Belum Dibayar":1,
-        "Sudah Dibayar":2,
-        "Sedang Dikemas":3,
-        "Sudah Dikirim":4
-
-    };
-
-    const current=
-        statusNumber[status]||1;
-
-    if(current>=step)
-        return "line-done";
-
-    return "";
-
+function getLineClass(status, step){
+    const statusNumber = { "Belum Dibayar": 1, "Sudah Dibayar": 2, "Sedang Dikemas": 3, "Sudah Dikirim": 4 };
+    const current = statusNumber[status] || 1;
+    return current >= step ? "line-done" : "";
 }
-
-
-/* MESSAGE */
 
 function getStatusMessage(status){
-
     switch(status){
-
-        case "Sudah Dibayar":
-            return "💳 Pembayaran sudah dikonfirmasi.";
-
-        case "Sedang Dikemas":
-            return "📦 Pesanan sedang dikemas oleh penjual.";
-
-        case "Sudah Dikirim":
-            return "🚚 Pesanan sudah dikirim dan sedang dalam perjalanan.";
-
-        default:
-            return "💰 Pesanan menunggu pembayaran.";
-
+        case "Sudah Dibayar": return "💳 Pembayaran sudah dikonfirmasi.";
+        case "Sedang Dikemas": return "📦 Pesanan sedang dikemas oleh penjual.";
+        case "Sudah Dikirim": return "🚚 Pesanan sudah dikirim dan sedang dalam perjalanan.";
+        default: return "💰 Pesanan menunggu pembayaran.";
     }
-
 }
-
-
-/* ICON */
 
 function getStatusIcon(status){
-
     switch(status){
-
-        case "Sudah Dibayar":
-            return "✅";
-
-        case "Sedang Dikemas":
-            return "📦";
-
-        case "Sudah Dikirim":
-            return "🚚";
-
-        default:
-            return "💰";
-
+        case "Sudah Dibayar": return "✅";
+        case "Sedang Dikemas": return "📦";
+        case "Sudah Dikirim": return "🚚";
+        default: return "💰";
     }
-
 }
 
+/* CEK SESI LOGIN SAAT BUKA HALAMAN */
+const loggedUser = localStorage.getItem("loggedUser");
+const loggedRole = localStorage.getItem("loggedRole");
 
-/* SESSION */
-
-const loggedUser=
-    localStorage.getItem("loggedUser");
-
-const loggedRole=
-    localStorage.getItem("loggedRole");
-
-
-if(
-    loggedUser &&
-    loggedRole==="customer"
-){
-
+if(loggedUser && (loggedRole === "customer" || loggedRole === "admin")){
     showApp();
-
-}
-
-else if(
-    loggedUser &&
-    loggedRole==="admin"
-){
-
-    showApp();
-
-}
-
-else{
-
-    document
-        .getElementById("loginPage")
-        .classList.remove("hidden");
-
-    document
-        .getElementById("app")
-        .classList.add("hidden");
-
+} else {
+    document.getElementById("loginPage").classList.remove("hidden");
+    document.getElementById("app").classList.add("hidden");
 }
 
 </script>
